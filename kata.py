@@ -2,7 +2,31 @@ import json
 import requests
 import geopy.distance
 
-def CompareCoordinates(fromLat,fromLong,toLat,toLong):
+def main():  
+ goodInput = False
+ while not goodInput:
+  latitude = input("Enter latitude ")
+  latitude = ConvertCoordinates(latitude, True)
+  longitude = input("Enter longitude ")
+  longitude = ConvertCoordinates(longitude, False)
+  goodInput = HandleInputs(latitude, longitude)
+
+ response = requests.get('https://opensky-network.org/api/states/all',verify=False)
+ data = response.json()
+ planes = data["states"]
+ closestPlane=None
+ closestDistance = 99999999
+ for x in planes:
+  currentDistance = GetMilesBetweenCoordinates(x[6],x[5],latitude,longitude)
+  if currentDistance < closestDistance:
+   closestDistance = currentDistance
+   closestPlane=x
+
+ print ("The closest plane is ",closestDistance," miles away")
+ print ("Name ",closestPlane[1],"\nLatitude ",closestPlane[5],"\nLongitude",closestPlane[6],"\nAltitude",closestPlane[7]," meters","\nCountry of origin ",closestPlane[2])
+
+
+def GetMilesBetweenCoordinates(fromLat,fromLong,toLat,toLong):
  coordsFrom = (fromLat, fromLong)
  coordsTo = (toLat,toLong) 
  return geopy.distance.geodesic(coordsFrom, coordsTo).miles
@@ -30,30 +54,7 @@ def HandleInputs(latitude, longitude):
  if longitude < -180 or longitude > 180:
   print ("longitude must be between 180 and -180")
   return False
- return True   
-  
-  
-goodInput = False
-while not goodInput:
- latitude = input("Enter latitude ")
- latitude = ConvertCoordinates(latitude, True)
- longitude = input("Enter longitude ")
- longitude = ConvertCoordinates(longitude, False)
- goodInput = HandleInputs(latitude, longitude)
+ return True
 
-response = requests.get('https://opensky-network.org/api/states/all',verify=False)
-data = response.json()
-planes = data["states"]
-closestPlane=None
-closestDistance = 99999999
-for x in planes:
- currentDistance = CompareCoordinates(x[6],x[5],latitude,longitude)
- if currentDistance < closestDistance:
-  closestDistance = currentDistance
-  closestPlane=x
-
-print ("The closest plane is ",closestDistance," miles away")
-print ("Name ",closestPlane[1],"\nLatitude ",closestPlane[5],"\nLongitude",closestPlane[6],"\nAltitude",closestPlane[7]," meters","\nCountry of origin ",closestPlane[2])
-
-#https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude/43211266#43211266
-#https://stackoverflow.com/questions/39356413/how-to-add-a-custom-ca-root-certificate-to-the-ca-store-used-by-pip-in-windows
+if __name__ == "__main__":
+ main()
